@@ -221,6 +221,9 @@ impl CPU {
                 0x70 => {
                     self.bvs(&opcode.mode);
                 }
+                0x24 | 0x2C => {
+                    self.bit(&opcode.mode);
+                }
                 0x00 => {
                     return;
                 }
@@ -450,6 +453,21 @@ impl CPU {
             let addr = self.get_operand_address(mode);
             self.program_counter = addr;
         }
+    }
+
+    fn bit(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+        let result = self.register_a & value;
+
+        if result == 0 {
+            self.status = self.status | ZERO_FLAG;
+        } else {
+            self.status = self.status & !ZERO_FLAG
+        }
+
+        self.status = (self.status & !(NEGATIVE_FLAG | OVERFLOW_FLAG))
+            | (value & (NEGATIVE_FLAG | OVERFLOW_FLAG))
     }
 
     fn update_zero_and_negative_flags(&mut self, result: u8) {
