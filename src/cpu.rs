@@ -266,6 +266,27 @@ impl CPU {
                 0xC8 => {
                     self.iny();
                 }
+                0x18 => {
+                    self.clc();
+                }
+                0x38 => {
+                    self.sec();
+                }
+                0xD8 => {
+                    self.cld();
+                }
+                0xF8 => {
+                    self.sed();
+                }
+                0x58 => {
+                    self.cli();
+                }
+                0x78 => {
+                    self.sei();
+                }
+                0xB8 => {
+                    self.clv();
+                }
                 _ => todo!(""),
             }
 
@@ -602,6 +623,34 @@ impl CPU {
     fn iny(&mut self) {
         self.register_y = self.register_y.wrapping_add(1);
         self.update_zero_and_negative_flags(self.register_y);
+    }
+
+    fn clc(&mut self) {
+        self.status = self.status & !CARRY_FLAG;
+    }
+
+    fn sec(&mut self) {
+        self.status = self.status | CARRY_FLAG;
+    }
+
+    fn cld(&mut self) {
+        self.status = self.status & !DECIMAL_FLAG;
+    }
+
+    fn sed(&mut self) {
+        self.status = self.status | DECIMAL_FLAG;
+    }
+
+    fn cli(&mut self) {
+        self.status = self.status & !INTERRUPT_DISABLE_FLAG;
+    }
+
+    fn sei(&mut self) {
+        self.status = self.status | INTERRUPT_DISABLE_FLAG;
+    }
+
+    fn clv(&mut self) {
+        self.status = self.status & !OVERFLOW_FLAG;
     }
 
     fn stack_push(&mut self, value: u8) {
