@@ -236,6 +236,9 @@ impl CPU {
                 0x00 => {
                     return;
                 }
+                0x40 => {
+                    self.rti();
+                }
                 _ => todo!(""),
             }
 
@@ -492,6 +495,11 @@ impl CPU {
 
     fn rts(&mut self) {
         self.program_counter = self.stack_pop_u16() + 1;
+    }
+
+    fn rti(&mut self) {
+        self.status = (self.stack_pop() & !BREAK_FLAG) | BREAK2_FLAG;
+        self.program_counter = self.stack_pop_u16();
     }
 
     fn stack_push(&mut self, value: u8) {

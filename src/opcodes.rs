@@ -104,6 +104,9 @@ static OPCODES: Lazy<Vec<OpCode>> = Lazy::new(|| {
         OpCode::new(0x6c, "JMP", 3, 5, AddressingMode::Indirect),
         OpCode::new(0x20, "JSR", 3, 6, AddressingMode::Absolute),
         OpCode::new(0x60, "RTS", 1, 6, AddressingMode::Implied),
+        // 割り込み
+        OpCode::new(0x00, "BRK", 1, 7, AddressingMode::Implied),
+        OpCode::new(0x40, "RTI", 1, 6, AddressingMode::Implied),
     ]
 });
 
