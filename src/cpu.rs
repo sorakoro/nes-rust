@@ -305,6 +305,24 @@ impl CPU {
                 0x84 | 0x94 | 0x8C => {
                     self.sty(&opcode.mode);
                 }
+                0xAA => {
+                    self.tax();
+                }
+                0xA8 => {
+                    self.tay();
+                }
+                0xBA => {
+                    self.tsx();
+                }
+                0x8A => {
+                    self.txa();
+                }
+                0x9A => {
+                    self.txs();
+                }
+                0x98 => {
+                    self.tya();
+                }
                 _ => todo!(""),
             }
 
@@ -705,6 +723,35 @@ impl CPU {
     fn sty(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         self.mem_write(addr, self.register_y);
+    }
+
+    fn tax(&mut self) {
+        self.register_x = self.register_a;
+        self.update_zero_and_negative_flags(self.register_x);
+    }
+
+    fn tay(&mut self) {
+        self.register_y = self.register_a;
+        self.update_zero_and_negative_flags(self.register_y)
+    }
+
+    fn tsx(&mut self) {
+        self.register_x = self.stack_pointer;
+        self.update_zero_and_negative_flags(self.register_x);
+    }
+
+    fn txa(&mut self) {
+        self.register_a = self.register_x;
+        self.update_zero_and_negative_flags(self.register_a);
+    }
+
+    fn txs(&mut self) {
+        self.stack_pointer = self.register_x;
+    }
+
+    fn tya(&mut self) {
+        self.register_a = self.register_y;
+        self.update_zero_and_negative_flags(self.register_a);
     }
 
     fn stack_push(&mut self, value: u8) {

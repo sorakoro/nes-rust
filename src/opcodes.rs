@@ -176,6 +176,13 @@ static OPCODES: Lazy<Vec<OpCode>> = Lazy::new(|| {
         OpCode::new(0x84, "STY", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0x94, "STY", 2, 4, AddressingMode::ZeroPage_X),
         OpCode::new(0x8c, "STY", 3, 4, AddressingMode::Absolute),
+        // レジスタ間転送
+        OpCode::new(0xaa, "TAX", 1, 2, AddressingMode::Implied),
+        OpCode::new(0xa8, "TAY", 1, 2, AddressingMode::Implied),
+        OpCode::new(0xba, "TSX", 1, 2, AddressingMode::Implied),
+        OpCode::new(0x8a, "TXA", 1, 2, AddressingMode::Implied),
+        OpCode::new(0x9a, "TXS", 1, 2, AddressingMode::Implied),
+        OpCode::new(0x98, "TYA", 1, 2, AddressingMode::Implied),
     ]
 });
 
