@@ -185,6 +185,18 @@ impl CPU {
                 0x49 | 0x45 | 0x55 | 0x4D | 0x5D | 0x59 | 0x41 | 0x51 => {
                     self.eor(&opcode.mode);
                 }
+                0x0A | 0x06 | 0x16 | 0x0E | 0x1E => {
+                    self.asl(&opcode.mode);
+                }
+                0x4A | 0x46 | 0x56 | 0x4E | 0x5E => {
+                    self.lsr(&opcode.mode);
+                }
+                0x2A | 0x26 | 0x36 | 0x2E | 0x3E => {
+                    self.rol(&opcode.mode);
+                }
+                0x6A | 0x66 | 0x76 | 0x6E | 0x7E => {
+                    self.ror(&opcode.mode);
+                }
                 0x00 => {
                     return;
                 }
@@ -269,6 +281,95 @@ impl CPU {
         let value = self.mem_read(addr);
         self.register_a = self.register_a ^ value;
         self.update_zero_and_negative_flags(self.register_a);
+    }
+
+    fn asl(&mut self, mode: &AddressingMode) {
+        let (value, carry) = if mode == &AddressingMode::Accumulator {
+            let (value, carry) = self.register_a.overflowing_mul(2);
+            self.register_a = value;
+            (value, carry)
+        } else {
+            let addr = self.get_operand_address(mode);
+            let value = self.mem_read(addr);
+            let (value, carry) = value.overflowing_mul(2);
+            self.mem_write(addr, value);
+            (value, carry)
+        };
+
+        if carry {
+            self.status |= CARRY_FLAG;
+        } else {
+            self.status &= !CARRY_FLAG;
+        }
+        self.update_zero_and_negative_flags(value);
+    }
+
+    fn lsr(&mut self, mode: &AddressingMode) {
+        let (value, carry) = if mode == &AddressingMode::Accumulator {
+            let carry = self.register_a & 0x01;
+            self.register_a = self.register_a / 2;
+            (self.register_a, carry)
+        } else {
+            let addr = self.get_operand_address(mode);
+            let value = self.mem_read(addr);
+            let carry = value & 0x01;
+            let value = value / 2;
+            self.mem_write(addr, value);
+            (value, carry)
+        };
+
+        if carry != 0 {
+            self.status |= CARRY_FLAG;
+        } else {
+            self.status &= !CARRY_FLAG;
+        }
+        self.update_zero_and_negative_flags(value);
+    }
+
+    fn rol(&mut self, mode: &AddressingMode) {
+        let (value, carry) = if mode == &AddressingMode::Accumulator {
+            let (value, carry) = self.register_a.overflowing_mul(2);
+            self.register_a = value | (self.status & 0x01);
+            (self.register_a, carry)
+        } else {
+            let addr = self.get_operand_address(mode);
+            let value = self.mem_read(addr);
+            let (value, carry) = value.overflowing_mul(2);
+            let value = value | (self.status & 0x01);
+            self.mem_write(addr, value);
+            (value, carry)
+        };
+
+        if carry {
+            self.status |= CARRY_FLAG;
+        } else {
+            self.status &= !CARRY_FLAG;
+        }
+        self.update_zero_and_negative_flags(value);
+    }
+
+    fn ror(&mut self, mode: &AddressingMode) {
+        let (value, carry) = if mode == &AddressingMode::Accumulator {
+            let carry = self.register_a & 0x01;
+            self.register_a = self.register_a / 2;
+            self.register_a = self.register_a | ((self.status & 0x01) << 7);
+            (self.register_a, carry)
+        } else {
+            let addr = self.get_operand_address(mode);
+            let value = self.mem_read(addr);
+            let carry = value & 0x01;
+            let value = value / 2;
+            let value = value | ((self.status & 0x01) << 7);
+            self.mem_write(addr, value);
+            (value, carry)
+        };
+
+        if carry != 0 {
+            self.status |= CARRY_FLAG;
+        } else {
+            self.status &= !CARRY_FLAG;
+        }
+        self.update_zero_and_negative_flags(value);
     }
 
     fn update_zero_and_negative_flags(&mut self, result: u8) {
