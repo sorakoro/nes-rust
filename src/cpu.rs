@@ -224,6 +224,15 @@ impl CPU {
                 0x24 | 0x2C => {
                     self.bit(&opcode.mode);
                 }
+                0x4C | 0x6C => {
+                    self.jmp(&opcode.mode);
+                }
+                0x20 => {
+                    self.jsr(&opcode.mode);
+                }
+                0x60 => {
+                    self.rts();
+                }
                 0x00 => {
                     return;
                 }
@@ -468,6 +477,44 @@ impl CPU {
 
         self.status = (self.status & !(NEGATIVE_FLAG | OVERFLOW_FLAG))
             | (value & (NEGATIVE_FLAG | OVERFLOW_FLAG))
+    }
+
+    fn jmp(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        self.program_counter = addr;
+    }
+
+    fn jsr(&mut self, mode: &AddressingMode) {
+        self.stack_push_u16(self.program_counter + 2 - 1);
+        let addr = self.get_operand_address(mode);
+        self.program_counter = addr;
+    }
+
+    fn rts(&mut self) {
+        self.program_counter = self.stack_pop_u16() + 1;
+    }
+
+    fn stack_push(&mut self, value: u8) {
+        self.mem_write(0x100 + (self.stack_pointer as u16), value);
+        self.stack_pointer = self.stack_pointer.wrapping_sub(1);
+    }
+
+    fn stack_pop(&mut self) -> u8 {
+        self.stack_pointer = self.stack_pointer.wrapping_add(1);
+        self.mem_read(0x100 + (self.stack_pointer as u16))
+    }
+
+    fn stack_push_u16(&mut self, value: u16) {
+        let hi = (value >> 8) as u8;
+        let lo = (value & 0x00FF) as u8;
+        self.stack_push(hi);
+        self.stack_push(lo);
+    }
+
+    fn stack_pop_u16(&mut self) -> u16 {
+        let lo = self.stack_pop() as u16;
+        let hi = self.stack_pop() as u16;
+        (hi << 8) | lo
     }
 
     fn update_zero_and_negative_flags(&mut self, result: u8) {
