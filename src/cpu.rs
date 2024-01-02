@@ -239,6 +239,15 @@ impl CPU {
                 0x40 => {
                     self.rti();
                 }
+                0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1 => {
+                    self.cmp(&opcode.mode);
+                }
+                0xE0 | 0xE4 | 0xEC => {
+                    self.cpx(&opcode.mode);
+                }
+                0xC0 | 0xC4 | 0xCC => {
+                    self.cpy(&opcode.mode);
+                }
                 _ => todo!(""),
             }
 
@@ -500,6 +509,45 @@ impl CPU {
     fn rti(&mut self) {
         self.status = (self.stack_pop() & !BREAK_FLAG) | BREAK2_FLAG;
         self.program_counter = self.stack_pop_u16();
+    }
+
+    fn cmp(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        if self.register_a >= value {
+            self.status = self.status | CARRY_FLAG;
+        } else {
+            self.status = self.status & !CARRY_FLAG;
+        }
+
+        self.update_zero_and_negative_flags(self.register_a.wrapping_sub(value));
+    }
+
+    fn cpx(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        if self.register_x >= value {
+            self.status = self.status | CARRY_FLAG;
+        } else {
+            self.status = self.status & !CARRY_FLAG
+        }
+
+        self.update_zero_and_negative_flags(self.register_x.wrapping_sub(value));
+    }
+
+    fn cpy(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        if self.register_y >= value {
+            self.status = self.status | CARRY_FLAG;
+        } else {
+            self.status = self.status & !CARRY_FLAG
+        }
+
+        self.update_zero_and_negative_flags(self.register_y.wrapping_sub(value));
     }
 
     fn stack_push(&mut self, value: u8) {
