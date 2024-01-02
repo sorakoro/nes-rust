@@ -87,6 +87,15 @@ static OPCODES: Lazy<Vec<OpCode>> = Lazy::new(|| {
         OpCode::new(0x76, "ROR", 2, 6, AddressingMode::ZeroPage_X),
         OpCode::new(0x6e, "ROR", 3, 6, AddressingMode::Absolute),
         OpCode::new(0x7e, "ROR", 3, 7, AddressingMode::Absolute_X),
+        // 条件分岐
+        OpCode::new(0xd0, "BNE", 2, 2, AddressingMode::RELATIVE),
+        OpCode::new(0x70, "BVS", 2, 2, AddressingMode::RELATIVE),
+        OpCode::new(0x50, "BVC", 2, 2, AddressingMode::RELATIVE),
+        OpCode::new(0x30, "BMI", 2, 2, AddressingMode::RELATIVE),
+        OpCode::new(0xf0, "BEQ", 2, 2, AddressingMode::RELATIVE),
+        OpCode::new(0xb0, "BCS", 2, 2, AddressingMode::RELATIVE),
+        OpCode::new(0x90, "BCC", 2, 2, AddressingMode::RELATIVE),
+        OpCode::new(0x10, "BPL", 2, 2, AddressingMode::RELATIVE),
     ]
 });
 
