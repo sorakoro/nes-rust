@@ -296,6 +296,15 @@ impl CPU {
                 0xA0 | 0xA4 | 0xB4 | 0xAC | 0xBC => {
                     self.ldy(&opcode.mode);
                 }
+                0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => {
+                    self.sta(&opcode.mode);
+                }
+                0x86 | 0x96 | 0x8E => {
+                    self.stx(&opcode.mode);
+                }
+                0x84 | 0x94 | 0x8C => {
+                    self.sty(&opcode.mode);
+                }
                 _ => todo!(""),
             }
 
@@ -681,6 +690,21 @@ impl CPU {
         let value = self.mem_read(addr);
         self.register_y = value;
         self.update_zero_and_negative_flags(self.register_y);
+    }
+
+    fn sta(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        self.mem_write(addr, self.register_a);
+    }
+
+    fn stx(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        self.mem_write(addr, self.register_x);
+    }
+
+    fn sty(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        self.mem_write(addr, self.register_y);
     }
 
     fn stack_push(&mut self, value: u8) {
