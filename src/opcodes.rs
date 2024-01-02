@@ -143,6 +143,25 @@ static OPCODES: Lazy<Vec<OpCode>> = Lazy::new(|| {
         OpCode::new(0x38, "SEC", 1, 2, AddressingMode::Implied),
         OpCode::new(0x78, "SEI", 1, 2, AddressingMode::Implied),
         OpCode::new(0xf8, "SED", 1, 2, AddressingMode::Implied),
+        // ロード
+        OpCode::new(0xa9, "LDA", 2, 2, AddressingMode::Immediate),
+        OpCode::new(0xa5, "LDA", 2, 3, AddressingMode::ZeroPage),
+        OpCode::new(0xb5, "LDA", 2, 4, AddressingMode::ZeroPage_X),
+        OpCode::new(0xad, "LDA", 3, 4, AddressingMode::Absolute),
+        OpCode::new(0xbd, "LDA", 3, 4, AddressingMode::Absolute_X),
+        OpCode::new(0xb9, "LDA", 3, 4, AddressingMode::Absolute_Y),
+        OpCode::new(0xa1, "LDA", 2, 6, AddressingMode::Indirect_X),
+        OpCode::new(0xb1, "LDA", 2, 5, AddressingMode::Indirect_Y),
+        OpCode::new(0xa2, "LDX", 2, 2, AddressingMode::Immediate),
+        OpCode::new(0xa6, "LDX", 2, 3, AddressingMode::ZeroPage),
+        OpCode::new(0xb6, "LDX", 2, 4, AddressingMode::ZeroPage_Y),
+        OpCode::new(0xae, "LDX", 3, 4, AddressingMode::Absolute),
+        OpCode::new(0xbe, "LDX", 3, 4, AddressingMode::Absolute_Y),
+        OpCode::new(0xa0, "LDY", 2, 2, AddressingMode::Immediate),
+        OpCode::new(0xa4, "LDY", 2, 3, AddressingMode::ZeroPage),
+        OpCode::new(0xb4, "LDY", 2, 4, AddressingMode::ZeroPage_X),
+        OpCode::new(0xac, "LDY", 3, 4, AddressingMode::Absolute),
+        OpCode::new(0xbc, "LDY", 3, 4, AddressingMode::Absolute_X),
     ]
 });
 
