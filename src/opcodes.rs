@@ -122,6 +122,19 @@ static OPCODES: Lazy<Vec<OpCode>> = Lazy::new(|| {
         OpCode::new(0xe0, "CPX", 2, 2, AddressingMode::Immediate),
         OpCode::new(0xe4, "CPX", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0xec, "CPX", 3, 4, AddressingMode::Absolute),
+        // インクリメント、デクリメント
+        OpCode::new(0xe6, "INC", 2, 5, AddressingMode::ZeroPage),
+        OpCode::new(0xf6, "INC", 2, 6, AddressingMode::ZeroPage_X),
+        OpCode::new(0xee, "INC", 3, 6, AddressingMode::Absolute),
+        OpCode::new(0xfe, "INC", 3, 7, AddressingMode::Absolute_X),
+        OpCode::new(0xe8, "INX", 1, 2, AddressingMode::Implied),
+        OpCode::new(0xc8, "INY", 1, 2, AddressingMode::Implied),
+        OpCode::new(0xc6, "DEC", 2, 5, AddressingMode::ZeroPage),
+        OpCode::new(0xd6, "DEC", 2, 6, AddressingMode::ZeroPage_X),
+        OpCode::new(0xce, "DEC", 3, 6, AddressingMode::Absolute),
+        OpCode::new(0xde, "DEC", 3, 7, AddressingMode::Absolute_X),
+        OpCode::new(0xca, "DEX", 1, 2, AddressingMode::Implied),
+        OpCode::new(0x88, "DEY", 1, 2, AddressingMode::Implied),
     ]
 });
 
