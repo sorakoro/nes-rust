@@ -1,0 +1,257 @@
+use crate::opcodes;
+use std::collections::HashMap;
+
+const NEGATIVE_FLAG: u8 = 0b1000_0000;
+const OVERFLOW_FLAG: u8 = 0b0100_0000;
+const BREAK2_FLAG: u8 = 0b0010_0000;
+const BREAK_FLAG: u8 = 0b0001_0000;
+const DECIMAL_FLAG: u8 = 0b0000_1000;
+const INTERRUPT_DISABLE_FLAG: u8 = 0b0000_0100;
+const ZERO_FLAG: u8 = 0b0000_0010;
+const CARRY_FLAG: u8 = 0b0000_0001;
+
+#[derive(Debug, PartialEq)]
+#[allow(non_camel_case_types)]
+pub enum AddressingMode {
+    Implied,
+    Accumulator,
+    Immediate,
+    ZeroPage,
+    ZeroPage_X,
+    ZeroPage_Y,
+    Absolute,
+    Absolute_X,
+    Absolute_Y,
+    Indirect,
+    Indirect_X,
+    Indirect_Y,
+    RELATIVE,
+}
+
+pub trait Mem {
+    fn mem_read(&mut self, addr: u16) -> u8;
+
+    fn mem_write(&mut self, addr: u16, value: u8);
+
+    fn mem_read_u16(&mut self, pos: u16) -> u16 {
+        let lo = self.mem_read(pos) as u16;
+        let hi = self.mem_read(pos + 1) as u16;
+        (hi << 8) | (lo as u16)
+    }
+
+    fn mem_write_u16(&mut self, pos: u16, value: u16) {
+        let hi = (value >> 8) as u8;
+        let lo = (value & 0x00FF) as u8;
+        self.mem_write(pos, lo);
+        self.mem_write(pos + 1, hi);
+    }
+}
+
+pub struct CPU {
+    pub register_a: u8,
+    pub register_x: u8,
+    pub register_y: u8,
+    pub status: u8,
+    pub stack_pointer: u8,
+    pub program_counter: u16,
+    memory: [u8; 0xFFFF],
+}
+
+impl Mem for CPU {
+    fn mem_read(&mut self, addr: u16) -> u8 {
+        self.memory[addr as usize]
+    }
+
+    fn mem_write(&mut self, addr: u16, value: u8) {
+        self.memory[addr as usize] = value;
+    }
+
+    fn mem_read_u16(&mut self, pos: u16) -> u16 {
+        if pos == 0xFF || pos == 0x02FF {
+            let lo = self.mem_read(pos);
+            let hi = self.mem_read(pos & 0xFF00);
+            return (hi as u16) << 8 | (lo as u16);
+        }
+        self.mem_read_u16(pos)
+    }
+
+    fn mem_write_u16(&mut self, pos: u16, value: u16) {
+        self.mem_write_u16(pos, value);
+    }
+}
+
+impl CPU {
+    pub fn new() -> CPU {
+        CPU {
+            register_a: 0,
+            register_x: 0,
+            register_y: 0,
+            status: 0x24,
+            stack_pointer: 0xFD,
+            program_counter: 0,
+            memory: [0; 0xFFFF],
+        }
+    }
+
+    pub fn get_absolute_address(&mut self, mode: &AddressingMode, addr: u16) -> u16 {
+        match mode {
+            AddressingMode::Implied => {
+                panic!("AddressingMode::Implied");
+            }
+            AddressingMode::Accumulator => {
+                panic!("AddressingMode::Accumulator");
+            }
+            AddressingMode::Immediate => addr,
+
+            AddressingMode::ZeroPage => self.mem_read(addr) as u16,
+
+            AddressingMode::Absolute => self.mem_read_u16(addr),
+
+            AddressingMode::ZeroPage_X => {
+                let pos = self.mem_read(addr);
+                pos.wrapping_add(self.register_x) as u16
+            }
+            AddressingMode::ZeroPage_Y => {
+                let pos = self.mem_read(addr);
+                pos.wrapping_add(self.register_y) as u16
+            }
+            AddressingMode::Absolute_X => {
+                let base = self.mem_read_u16(addr);
+                base.wrapping_add(self.register_x as u16)
+            }
+            AddressingMode::Absolute_Y => {
+                let base = self.mem_read_u16(addr);
+                base.wrapping_add(self.register_y as u16)
+            }
+            AddressingMode::Indirect => {
+                let base = self.mem_read_u16(addr);
+                self.mem_read_u16(base)
+            }
+            AddressingMode::Indirect_X => {
+                let base = self.mem_read(addr);
+                let ptr = (base as u8).wrapping_add(self.register_x);
+                self.mem_read_u16(ptr as u16)
+            }
+            AddressingMode::Indirect_Y => {
+                let base = self.mem_read(addr);
+                let deref_base = self.mem_read_u16(base as u16);
+                deref_base.wrapping_add(self.register_y as u16)
+            }
+            AddressingMode::RELATIVE => {
+                let jump = self.mem_read(addr) as i8;
+                addr.wrapping_add(1).wrapping_add(jump as u16)
+            }
+        }
+    }
+
+    fn get_operand_address(&mut self, mode: &AddressingMode) -> u16 {
+        self.get_absolute_address(mode, self.program_counter)
+    }
+
+    pub fn reset(&mut self) {
+        self.register_a = 0;
+        self.register_x = 0;
+        self.register_y = 0;
+        self.status = 0x24;
+        self.stack_pointer = 0xFD;
+        self.program_counter = self.mem_read_u16(0xFFFC);
+    }
+
+    pub fn run(&mut self) {
+        let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
+
+        loop {
+            let opscode = self.mem_read(self.program_counter);
+            self.program_counter += 1;
+            let program_counter_state = self.program_counter;
+
+            let opcode = opcodes
+                .get(&opscode)
+                .expect(&format!("OpCode {:x} is not recognized", opscode));
+
+            match opscode {
+                0x69 | 0x65 | 0x75 | 0x6D | 0x7D | 0x79 | 0x61 | 0x71 => {
+                    self.adc(&opcode.mode);
+                }
+                0xE9 | 0xE5 | 0xF5 | 0xED | 0xFD | 0xF9 | 0xE1 | 0xF1 => {
+                    self.sbc(&opcode.mode);
+                }
+                0x00 => {
+                    return;
+                }
+                _ => todo!(""),
+            }
+
+            if program_counter_state == self.program_counter {
+                self.program_counter += (opcode.length - 1) as u16;
+            }
+        }
+    }
+
+    fn adc(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+        let carry = self.status & 0x01;
+        let sum = (self.register_a as u16)
+            .wrapping_add(value as u16)
+            .wrapping_add(carry as u16);
+
+        let carry = sum > 0xFF;
+        if carry {
+            self.status |= CARRY_FLAG;
+        } else {
+            self.status &= !CARRY_FLAG;
+        }
+
+        let result = sum as u8;
+        if (self.register_a ^ result) & (value ^ result) & 0x80 != 0 {
+            self.status |= OVERFLOW_FLAG;
+        } else {
+            self.status &= !OVERFLOW_FLAG;
+        }
+
+        self.register_a = result;
+        self.update_zero_and_negative_flags(self.register_a);
+    }
+
+    fn sbc(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+        let carry = self.status & 0x01;
+        let diff: u16 = (self.register_a as u16)
+            .wrapping_sub(value as u16)
+            .wrapping_sub((1 - carry) as u16);
+
+        let carry: bool = diff > 0xFF;
+        if carry {
+            self.status &= !CARRY_FLAG;
+        } else {
+            self.status |= CARRY_FLAG;
+        }
+
+        let result: u8 = diff as u8;
+        if (self.register_a & 0x80) != (value & 0x80) && (self.register_a & 0x80) != (result & 0x80)
+        {
+            self.status |= OVERFLOW_FLAG;
+        } else {
+            self.status &= !OVERFLOW_FLAG;
+        }
+
+        self.register_a = result;
+        self.update_zero_and_negative_flags(result);
+    }
+
+    fn update_zero_and_negative_flags(&mut self, result: u8) {
+        if result == 0 {
+            self.status = self.status | ZERO_FLAG;
+        } else {
+            self.status = self.status & !ZERO_FLAG;
+        }
+
+        if result & 0b1000_0000 != 0 {
+            self.status = self.status | NEGATIVE_FLAG;
+        } else {
+            self.status = self.status & !NEGATIVE_FLAG;
+        }
+    }
+}
