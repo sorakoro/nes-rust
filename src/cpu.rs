@@ -323,6 +323,18 @@ impl CPU {
                 0x98 => {
                     self.tya();
                 }
+                0x48 => {
+                    self.pha();
+                }
+                0x68 => {
+                    self.pla();
+                }
+                0x08 => {
+                    self.php();
+                }
+                0x28 => {
+                    self.plp();
+                }
                 _ => todo!(""),
             }
 
@@ -752,6 +764,23 @@ impl CPU {
     fn tya(&mut self) {
         self.register_a = self.register_y;
         self.update_zero_and_negative_flags(self.register_a);
+    }
+
+    fn pha(&mut self) {
+        self.stack_push(self.register_a);
+    }
+
+    fn pla(&mut self) {
+        self.register_a = self.stack_pop();
+        self.update_zero_and_negative_flags(self.register_a);
+    }
+
+    fn php(&mut self) {
+        self.stack_push((self.status | BREAK_FLAG) | BREAK2_FLAG);
+    }
+
+    fn plp(&mut self) {
+        self.status = (self.stack_pop() & !BREAK_FLAG) | BREAK2_FLAG;
     }
 
     fn stack_push(&mut self, value: u8) {
