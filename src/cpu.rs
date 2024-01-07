@@ -81,7 +81,7 @@ impl Mem for CPU {
 }
 
 impl CPU {
-    pub fn new() -> CPU {
+    pub fn new(bus: Bus) -> CPU {
         CPU {
             register_a: 0,
             register_x: 0,
@@ -89,7 +89,7 @@ impl CPU {
             status: 0x24,
             stack_pointer: 0xFD,
             program_counter: 0,
-            bus: Bus::new(),
+            bus: bus,
         }
     }
 
@@ -157,10 +157,14 @@ impl CPU {
         self.program_counter = self.mem_read_u16(0xFFFC);
     }
 
-    pub fn run(&mut self) {
+    pub fn run<F>(&mut self, mut callback: F)
+    where
+        F: FnMut(&mut CPU),
+    {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
         loop {
+            callback(self);
             let opscode = self.mem_read(self.program_counter);
             self.program_counter += 1;
             let program_counter_state = self.program_counter;
