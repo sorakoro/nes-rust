@@ -364,6 +364,9 @@ impl CPU {
                 0x27 | 0x37 | 0x2F | 0x3F | 0x3B | 0x33 | 0x23 => {
                     self.rla(&opcode.mode);
                 }
+                0x47 | 0x57 | 0x4F | 0x5F | 0x5B | 0x43 | 0x53 => {
+                    self.sre(&opcode.mode);
+                }
                 _ => todo!(""),
             }
 
@@ -845,6 +848,11 @@ impl CPU {
     fn rla(&mut self, mode: &AddressingMode) {
         self.rol(mode);
         self.and(mode);
+    }
+
+    fn sre(&mut self, mode: &AddressingMode) {
+        self.lsr(mode);
+        self.eor(mode);
     }
 
     fn stack_push(&mut self, value: u8) {
