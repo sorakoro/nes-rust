@@ -1,29 +1,28 @@
-use crate::{cart::Rom, cpu::Mem};
-
-const RAM: u16 = 0x0000;
-const RAM_MIRRORS_END: u16 = 0x1FFF;
-const PPU_REGISTERS: u16 = 0x2000;
-const PPU_REGISTERS_MIRRORS_END: u16 = 0x3FFF;
+use crate::{cart::Rom, cpu::Mem, ppu::PPU};
+use core::panic;
 
 pub struct Bus {
     ram: [u8; 2048],
-    rom: Rom,
+    prg_rom: Vec<u8>,
+    ppu: PPU,
 }
 
 impl Bus {
     pub fn new(rom: Rom) -> Bus {
+        let ppu = PPU::new(rom.chr_rom, rom.screen_mirroring);
         Bus {
             ram: [0; 2048],
-            rom,
+            prg_rom: rom.prg_rom,
+            ppu,
         }
     }
 
     fn read_prg_rom(&self, mut addr: u16) -> u8 {
         addr -= 0x8000;
-        if self.rom.prg_rom.len() == 0x4000 && addr >= 0x4000 {
+        if self.prg_rom.len() == 0x4000 && addr >= 0x4000 {
             addr = addr % 0x4000;
         }
-        self.rom.prg_rom[addr as usize]
+        self.prg_rom[addr as usize]
     }
 }
 
@@ -34,9 +33,19 @@ impl Mem for Bus {
                 let mirror_down_addr = addr & 0b00000111_11111111;
                 self.ram[mirror_down_addr as usize]
             }
-            PPU_REGISTERS..=PPU_REGISTERS_MIRRORS_END => {
-                let _mirror_down_addr = addr & 0b00100000_00000111;
-                todo!("PPU is not supported yet")
+            0x2000 | 0x2001 | 0x2003 | 0x2005 | 0x2006 => {
+                panic!("Attempt to read from write-only PPU address {:X}", addr)
+            }
+            0x2002 => {
+                panic!("Attempt to read from PPU status register")
+            }
+            0x2004 => {
+                panic!("Attempt to read from OAM data")
+            }
+            0x2007 => self.ppu.read_data(),
+            0x2008..=0x3FFF => {
+                let mirror_down_addr = addr & 0b00100000_00000111;
+                self.mem_read(mirror_down_addr)
             }
             0x8000..=0xFFFF => self.read_prg_rom(addr),
             _ => {
@@ -46,15 +55,39 @@ impl Mem for Bus {
         }
     }
 
-    fn mem_write(&mut self, addr: u16, data: u8) {
+    fn mem_write(&mut self, addr: u16, value: u8) {
         match addr {
-            RAM..=RAM_MIRRORS_END => {
+            0x0000..=0x1FFF => {
                 let mirror_down_addr = addr & 0b11111111111;
-                self.ram[mirror_down_addr as usize] = data;
+                self.ram[mirror_down_addr as usize] = value;
             }
-            PPU_REGISTERS..=PPU_REGISTERS_MIRRORS_END => {
+            0x2000 => {
+                self.ppu.write_to_ctrl(value);
+            }
+            0x2001 => {
+                panic!("Attempt to write to PPU mask register")
+            }
+            0x2002 => {
+                panic!("Attempt to write from read-only PPU address {:X}", addr)
+            }
+            0x2003 => {
+                panic!("Attempt to write to OAM address register")
+            }
+            0x2004 => {
+                panic!("Attempt to write to OAM data register")
+            }
+            0x2005 => {
+                panic!("Attempt to write to PPU scroll register")
+            }
+            0x2006 => {
+                self.ppu.write_to_ppu_addr(value);
+            }
+            0x2007 => {
+                self.ppu.write_to_data(value);
+            }
+            0x2008..=0x3FFF => {
                 let _mirror_down_addr = addr & 0b00100000_00000111;
-                todo!("PPU is not supported yet");
+                self.mem_write(addr, value);
             }
             0x8000..=0xFFFF => {
                 panic!("Attempt to write to Cartridge ROM space")
