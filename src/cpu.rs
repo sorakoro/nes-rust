@@ -343,6 +343,9 @@ impl CPU {
                 0x80 => {
                     self.nop();
                 }
+                0xA7 | 0xB7 | 0xAF | 0xBF | 0xA3 | 0xB3 => {
+                    self.lax(&opcode.mode);
+                }
                 _ => todo!(""),
             }
 
@@ -793,6 +796,11 @@ impl CPU {
 
     fn nop(&mut self) {
         // no operation
+    }
+
+    fn lax(&mut self, mode: &AddressingMode) {
+        self.lda(mode);
+        self.tax();
     }
 
     fn stack_push(&mut self, value: u8) {

@@ -214,6 +214,13 @@ static OPCODES: Lazy<Vec<OpCode>> = Lazy::new(|| {
         OpCode::new(0xfa, "*NOP", 1, 2, AddressingMode::Implied),
         // SKB
         OpCode::new(0x80, "*NOP", 2, 2, AddressingMode::Immediate),
+        // LAX
+        OpCode::new(0xa7, "*LAX", 2, 3, AddressingMode::ZeroPage),
+        OpCode::new(0xb7, "*LAX", 2, 4, AddressingMode::ZeroPage_Y),
+        OpCode::new(0xaf, "*LAX", 3, 4, AddressingMode::Absolute),
+        OpCode::new(0xbf, "*LAX", 3, 4, AddressingMode::Absolute_Y),
+        OpCode::new(0xa3, "*LAX", 2, 6, AddressingMode::Indirect_X),
+        OpCode::new(0xb3, "*LAX", 2, 5, AddressingMode::Indirect_Y),
     ]
 });
 
