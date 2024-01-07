@@ -1,4 +1,4 @@
-use crate::opcodes;
+use crate::{bus::Bus, opcodes};
 use std::collections::HashMap;
 
 const NEGATIVE_FLAG: u8 = 0b1000_0000;
@@ -54,16 +54,16 @@ pub struct CPU {
     pub status: u8,
     pub stack_pointer: u8,
     pub program_counter: u16,
-    memory: [u8; 0xFFFF],
+    pub bus: Bus,
 }
 
 impl Mem for CPU {
     fn mem_read(&mut self, addr: u16) -> u8 {
-        self.memory[addr as usize]
+        self.bus.mem_read(addr)
     }
 
     fn mem_write(&mut self, addr: u16, value: u8) {
-        self.memory[addr as usize] = value;
+        self.bus.mem_write(addr, value)
     }
 
     fn mem_read_u16(&mut self, pos: u16) -> u16 {
@@ -72,11 +72,11 @@ impl Mem for CPU {
             let hi = self.mem_read(pos & 0xFF00);
             return (hi as u16) << 8 | (lo as u16);
         }
-        self.mem_read_u16(pos)
+        self.bus.mem_read_u16(pos)
     }
 
     fn mem_write_u16(&mut self, pos: u16, value: u16) {
-        self.mem_write_u16(pos, value);
+        self.bus.mem_write_u16(pos, value);
     }
 }
 
@@ -89,7 +89,7 @@ impl CPU {
             status: 0x24,
             stack_pointer: 0xFD,
             program_counter: 0,
-            memory: [0; 0xFFFF],
+            bus: Bus::new(),
         }
     }
 
