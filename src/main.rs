@@ -8,6 +8,7 @@ mod bus;
 mod cart;
 mod cpu;
 mod opcodes;
+mod ppu;
 mod trace;
 
 fn main() {
