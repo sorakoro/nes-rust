@@ -340,6 +340,9 @@ impl CPU {
                 | 0xFA => {
                     self.nop();
                 }
+                0x80 => {
+                    self.nop();
+                }
                 _ => todo!(""),
             }
 
