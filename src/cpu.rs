@@ -346,6 +346,9 @@ impl CPU {
                 0xA7 | 0xB7 | 0xAF | 0xBF | 0xA3 | 0xB3 => {
                     self.lax(&opcode.mode);
                 }
+                0x87 | 0x97 | 0x8F | 0x83 => {
+                    self.sax(&opcode.mode);
+                }
                 _ => todo!(""),
             }
 
@@ -801,6 +804,12 @@ impl CPU {
     fn lax(&mut self, mode: &AddressingMode) {
         self.lda(mode);
         self.tax();
+    }
+
+    fn sax(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.register_a & self.register_x;
+        self.mem_write(addr, value);
     }
 
     fn stack_push(&mut self, value: u8) {
