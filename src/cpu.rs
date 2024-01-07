@@ -352,6 +352,10 @@ impl CPU {
                 0xEB => {
                     self.sbc(&opcode.mode);
                 }
+                // DCP
+                0xC7 | 0xD7 | 0xCF | 0xDF | 0xDB | 0xD3 | 0xC3 => {
+                    self.dcp(&opcode.mode);
+                }
                 _ => todo!(""),
             }
 
@@ -813,6 +817,11 @@ impl CPU {
         let addr = self.get_operand_address(mode);
         let value = self.register_a & self.register_x;
         self.mem_write(addr, value);
+    }
+
+    fn dcp(&mut self, mode: &AddressingMode) {
+        self.dec(mode);
+        self.cmp(mode);
     }
 
     fn stack_push(&mut self, value: u8) {
