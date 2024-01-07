@@ -352,9 +352,11 @@ impl CPU {
                 0xEB => {
                     self.sbc(&opcode.mode);
                 }
-                // DCP
                 0xC7 | 0xD7 | 0xCF | 0xDF | 0xDB | 0xD3 | 0xC3 => {
                     self.dcp(&opcode.mode);
+                }
+                0xE7 | 0xF7 | 0xEF | 0xFF | 0xFB | 0xE3 | 0xF3 => {
+                    self.isb(&opcode.mode);
                 }
                 _ => todo!(""),
             }
@@ -822,6 +824,11 @@ impl CPU {
     fn dcp(&mut self, mode: &AddressingMode) {
         self.dec(mode);
         self.cmp(mode);
+    }
+
+    fn isb(&mut self, mode: &AddressingMode) {
+        self.inc(mode);
+        self.sbc(mode);
     }
 
     fn stack_push(&mut self, value: u8) {
