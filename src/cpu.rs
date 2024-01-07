@@ -335,6 +335,11 @@ impl CPU {
                 0x28 => {
                     self.plp();
                 }
+                0xEA | 0x04 | 0x44 | 0x64 | 0x14 | 0x34 | 0x54 | 0x74 | 0xD4 | 0xF4 | 0x0C
+                | 0x1C | 0x3C | 0x5C | 0x7C | 0xDC | 0xFC | 0x1A | 0x3A | 0x5A | 0x7A | 0xDA
+                | 0xFA => {
+                    self.nop();
+                }
                 _ => todo!(""),
             }
 
@@ -781,6 +786,10 @@ impl CPU {
 
     fn plp(&mut self) {
         self.status = (self.stack_pop() & !BREAK_FLAG) | BREAK2_FLAG;
+    }
+
+    fn nop(&mut self) {
+        // no operation
     }
 
     fn stack_push(&mut self, value: u8) {
