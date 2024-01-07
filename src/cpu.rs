@@ -361,6 +361,9 @@ impl CPU {
                 0x07 | 0x17 | 0x0F | 0x1F | 0x1B | 0x03 | 0x13 => {
                     self.slo(&opcode.mode);
                 }
+                0x27 | 0x37 | 0x2F | 0x3F | 0x3B | 0x33 | 0x23 => {
+                    self.rla(&opcode.mode);
+                }
                 _ => todo!(""),
             }
 
@@ -837,6 +840,11 @@ impl CPU {
     fn slo(&mut self, mode: &AddressingMode) {
         self.asl(mode);
         self.ora(mode);
+    }
+
+    fn rla(&mut self, mode: &AddressingMode) {
+        self.rol(mode);
+        self.and(mode);
     }
 
     fn stack_push(&mut self, value: u8) {
