@@ -36,9 +36,7 @@ impl Mem for Bus {
             0x2000 | 0x2001 | 0x2003 | 0x2005 | 0x2006 => {
                 panic!("Attempt to read from write-only PPU address {:X}", addr)
             }
-            0x2002 => {
-                panic!("Attempt to read from PPU status register")
-            }
+            0x2002 => self.ppu.read_status(),
             0x2004 => {
                 panic!("Attempt to read from OAM data")
             }

@@ -1,6 +1,6 @@
-use registers::mask::MaskRegister;
-
-use self::registers::{address::AddrRegister, control::ControlRegister};
+use self::registers::{
+    address::AddrRegister, control::ControlRegister, mask::MaskRegister, status::StatusRegister,
+};
 use crate::cart::Mirroring;
 
 pub mod registers;
@@ -14,6 +14,7 @@ pub struct PPU {
     pub addr: AddrRegister,
     pub ctrl: ControlRegister,
     pub mask: MaskRegister,
+    pub status: StatusRegister,
     internal_data_buf: u8,
 }
 
@@ -28,6 +29,7 @@ impl PPU {
             addr: AddrRegister::new(),
             ctrl: ControlRegister::new(),
             mask: MaskRegister::new(),
+            status: StatusRegister::new(),
             internal_data_buf: 0,
         }
     }
@@ -42,6 +44,13 @@ impl PPU {
 
     pub fn write_to_mask(&mut self, value: u8) {
         self.mask.update(value);
+    }
+
+    pub fn read_status(&mut self) -> u8 {
+        let value = self.status.get();
+        self.status.reset_vblank_status();
+        self.addr.reset_latch();
+        value
     }
 
     pub fn read_data(&mut self) -> u8 {
