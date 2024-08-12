@@ -1,3 +1,5 @@
+use registers::mask::MaskRegister;
+
 use self::registers::{address::AddrRegister, control::ControlRegister};
 use crate::cart::Mirroring;
 
@@ -11,6 +13,7 @@ pub struct PPU {
     pub mirroring: Mirroring,
     pub addr: AddrRegister,
     pub ctrl: ControlRegister,
+    pub mask: MaskRegister,
     internal_data_buf: u8,
 }
 
@@ -24,6 +27,7 @@ impl PPU {
             mirroring,
             addr: AddrRegister::new(),
             ctrl: ControlRegister::new(),
+            mask: MaskRegister::new(),
             internal_data_buf: 0,
         }
     }
@@ -34,6 +38,10 @@ impl PPU {
 
     pub fn write_to_ctrl(&mut self, value: u8) {
         self.ctrl.update(value);
+    }
+
+    pub fn write_to_mask(&mut self, value: u8) {
+        self.mask.update(value);
     }
 
     pub fn read_data(&mut self) -> u8 {

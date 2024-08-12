@@ -65,7 +65,7 @@ impl Mem for Bus {
                 self.ppu.write_to_ctrl(value);
             }
             0x2001 => {
-                panic!("Attempt to write to PPU mask register")
+                self.ppu.write_to_mask(value);
             }
             0x2002 => {
                 panic!("Attempt to write from read-only PPU address {:X}", addr)
